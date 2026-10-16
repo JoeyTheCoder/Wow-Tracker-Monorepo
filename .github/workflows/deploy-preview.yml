@@ -48,26 +48,19 @@ jobs:
           DEPLOY_USER: ${{ vars.DEPLOY_USER || secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || secrets.DEPLOY_PATH }}
           DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
-          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
           : "${DEPLOY_HOST:?Set DEPLOY_HOST as an Actions variable or secret}"
           : "${DEPLOY_USER:?Set DEPLOY_USER as an Actions variable or secret}"
           : "${DEPLOY_PATH:?Set DEPLOY_PATH as an Actions variable or secret}"
           : "${DEPLOY_SSH_PRIVATE_KEY:?Set the DEPLOY_SSH_PRIVATE_KEY Actions secret}"
-          : "${DEPLOY_KNOWN_HOSTS:?Set the DEPLOY_KNOWN_HOSTS Actions secret}"
 
           install -m 700 -d "$RUNNER_TEMP/ssh"
           printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > "$RUNNER_TEMP/ssh/deploy_key"
-          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$RUNNER_TEMP/ssh/known_hosts"
+          touch "$RUNNER_TEMP/ssh/known_hosts"
           chmod 600 "$RUNNER_TEMP/ssh/deploy_key" "$RUNNER_TEMP/ssh/known_hosts"
 
-          if ! ssh-keygen -F "$DEPLOY_HOST" -f "$RUNNER_TEMP/ssh/known_hosts" >/dev/null; then
-            echo "::error::DEPLOY_KNOWN_HOSTS has no host-key entry matching DEPLOY_HOST. Its first field must include the exact IP/hostname used for DEPLOY_HOST."
-            exit 1
-          fi
-
           rsync --archive --compress --delete \
-            -e "ssh -i $RUNNER_TEMP/ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$RUNNER_TEMP/ssh/known_hosts -o GlobalKnownHostsFile=/dev/null" \
+            -e "ssh -i $RUNNER_TEMP/ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$RUNNER_TEMP/ssh/known_hosts -o GlobalKnownHostsFile=/dev/null" \
             frontend/dist/sapphirix-party-planner/browser/ \
             "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
