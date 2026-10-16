@@ -60,6 +60,17 @@ jobs:
           touch "$RUNNER_TEMP/ssh/known_hosts"
           chmod 600 "$RUNNER_TEMP/ssh/deploy_key" "$RUNNER_TEMP/ssh/known_hosts"
 
+          ssh_options=(
+            -i "$RUNNER_TEMP/ssh/deploy_key"
+            -o IdentitiesOnly=yes
+            -o StrictHostKeyChecking=accept-new
+            -o "UserKnownHostsFile=$RUNNER_TEMP/ssh/known_hosts"
+            -o GlobalKnownHostsFile=/dev/null
+          )
+          printf -v quoted_deploy_path '%q' "$DEPLOY_PATH"
+          ssh "${ssh_options[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "set -eu; target=$quoted_deploy_path; echo 'Remote account:'; id; echo 'Target path permissions:'; namei -l -- \"\$target\"; if [ ! -d \"\$target\" ]; then echo '::error::DEPLOY_PATH does not exist or is not a directory'; exit 1; fi; if [ ! -w \"\$target\" ] || [ ! -x \"\$target\" ]; then echo '::error::Remote account cannot write/traverse DEPLOY_PATH'; exit 1; fi; test_file=\"\$target/.github-actions-write-test-${GITHUB_RUN_ID}\"; touch \"\$test_file\"; rm -f \"\$test_file\"; echo 'Remote write test passed'"
+
           rsync --archive --compress --delete --no-times --no-perms --no-owner --no-group \
             --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r \
             -e "ssh -i $RUNNER_TEMP/ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$RUNNER_TEMP/ssh/known_hosts -o GlobalKnownHostsFile=/dev/null" \
