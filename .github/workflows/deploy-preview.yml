@@ -44,16 +44,16 @@ jobs:
 
       - name: Upload static site over SSH
         env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
-          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST || secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER || secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || secrets.DEPLOY_PATH }}
           DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
-          : "${DEPLOY_HOST:?Set the DEPLOY_HOST Actions variable}"
-          : "${DEPLOY_USER:?Set the DEPLOY_USER Actions variable}"
-          : "${DEPLOY_PATH:?Set the DEPLOY_PATH Actions variable}"
+          : "${DEPLOY_HOST:?Set DEPLOY_HOST as an Actions variable or secret}"
+          : "${DEPLOY_USER:?Set DEPLOY_USER as an Actions variable or secret}"
+          : "${DEPLOY_PATH:?Set DEPLOY_PATH as an Actions variable or secret}"
           : "${DEPLOY_SSH_PRIVATE_KEY:?Set the DEPLOY_SSH_PRIVATE_KEY Actions secret}"
           : "${DEPLOY_KNOWN_HOSTS:?Set the DEPLOY_KNOWN_HOSTS Actions secret}"
 
