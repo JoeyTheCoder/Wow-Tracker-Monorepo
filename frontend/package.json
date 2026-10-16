@@ -3,28 +3,29 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development"
+    "start": "npm run stage:assets && ng serve",
+    "build": "npm run stage:assets && ng build",
+    "stage:assets": "node scripts/stage-assets.js",
+    "watch": "npm run stage:assets && ng build --watch --configuration development"
   },
   "private": true,
   "dependencies": {
-    "@angular/common": "^19.2.0",
-    "@angular/compiler": "^19.2.0",
-    "@angular/core": "^19.2.0",
-    "@angular/platform-browser": "^19.2.0",
-    "@angular/router": "^19.2.0",
+    "@angular/common": "^22.2.3",
+    "@angular/compiler": "^22.2.3",
+    "@angular/core": "^22.2.3",
+    "@angular/platform-browser": "^22.2.3",
+    "@angular/router": "^22.2.3",
     "@tailwindcss/postcss": "^4.3.3",
-    "postcss": "^8.5.29",
+    "postcss": "^8.5.23",
     "rxjs": "~7.8.0",
     "tailwindcss": "^4.3.3",
     "tslib": "^2.3.0",
-    "zone.js": "~0.15.0"
+    "zone.js": "~0.16.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^19.2.7",
-    "@angular/cli": "^19.2.7",
-    "@angular/compiler-cli": "^19.2.0",
-    "typescript": "~5.7.2"
+    "@angular/build": "^22.2.3",
+    "@angular/cli": "^22.2.3",
+    "@angular/compiler-cli": "^22.2.3",
+    "typescript": "~6.0.3"
   }
 }
