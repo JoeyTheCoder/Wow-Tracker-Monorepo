@@ -60,7 +60,8 @@ jobs:
           touch "$RUNNER_TEMP/ssh/known_hosts"
           chmod 600 "$RUNNER_TEMP/ssh/deploy_key" "$RUNNER_TEMP/ssh/known_hosts"
 
-          rsync --archive --compress --delete \
+          rsync --archive --compress --delete --no-times --no-perms --no-owner --no-group \
+            --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r \
             -e "ssh -i $RUNNER_TEMP/ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$RUNNER_TEMP/ssh/known_hosts -o GlobalKnownHostsFile=/dev/null" \
             frontend/dist/sapphirix-party-planner/browser/ \
             "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
