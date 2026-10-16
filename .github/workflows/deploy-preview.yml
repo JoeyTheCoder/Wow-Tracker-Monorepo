@@ -1,0 +1,66 @@
+name: Deploy website preview
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'assets/**'
+      - 'frontend/**'
+      - '.github/workflows/deploy-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-website-preview
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Audit frontend dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+      - name: Build Angular site
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload static site over SSH
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          : "${DEPLOY_HOST:?Set the DEPLOY_HOST Actions variable}"
+          : "${DEPLOY_USER:?Set the DEPLOY_USER Actions variable}"
+          : "${DEPLOY_PATH:?Set the DEPLOY_PATH Actions variable}"
+          : "${DEPLOY_SSH_PRIVATE_KEY:?Set the DEPLOY_SSH_PRIVATE_KEY Actions secret}"
+          : "${DEPLOY_KNOWN_HOSTS:?Set the DEPLOY_KNOWN_HOSTS Actions secret}"
+
+          install -m 700 -d "$RUNNER_TEMP/ssh"
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > "$RUNNER_TEMP/ssh/deploy_key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$RUNNER_TEMP/ssh/known_hosts"
+          chmod 600 "$RUNNER_TEMP/ssh/deploy_key" "$RUNNER_TEMP/ssh/known_hosts"
+
+          rsync --archive --compress --delete \
+            -e "ssh -i $RUNNER_TEMP/ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$RUNNER_TEMP/ssh/known_hosts -o GlobalKnownHostsFile=/dev/null" \
+            frontend/dist/sapphirix-party-planner/browser/ \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"

@@ -1,0 +1,7 @@
+## Interface: 16001
+## Title: Sapphirix Party Planner
+## Notes: Reads the character name and level
+## Version: 0.1.0
+## SavedVariablesPerCharacter: DungeonTrackerDB
+
+Core.lua

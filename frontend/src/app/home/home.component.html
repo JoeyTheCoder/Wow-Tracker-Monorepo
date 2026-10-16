@@ -1,0 +1,110 @@
+<section class="planner-shell">
+  <header class="topbar">
+    <a class="brand" href="#home" aria-label="Sapphirix Party Planner home">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span><strong>SAPPHIRIX</strong><small>PARTY PLANNER</small></span>
+    </a>
+    <div class="group-name"><span class="group-mark">W</span><strong>Weekend Warriors</strong></div>
+    <div class="profile-area"><span class="sync-indicator preview-indicator">Preview</span><span class="profile-avatar">M</span></div>
+  </header>
+
+  <main id="home" class="page-content">
+    <section class="page-heading">
+      <div><h1>Plan your next run</h1><p>Pick a dungeon. Find a time. Go together.</p></div>
+      <button class="primary-button" (click)="sessionDialogOpen = true">Plan a session <span aria-hidden="true">+</span></button>
+    </section>
+    <p class="prototype-notice" role="note">Preview only · sample party and schedule data · changes are not saved or synced</p>
+
+    <div class="dashboard-grid">
+      <div class="main-column">
+        <section class="next-run-card" aria-labelledby="next-run-title">
+          <div class="card-topline"><span class="overline">NEXT UP</span><span class="target-level">Recommended levels {{ plannedDungeon.minLevel }}–{{ plannedDungeon.maxLevel }}</span></div>
+          <h2 id="next-run-title">{{ plannedDungeon.name }}</h2>
+          <p class="dungeon-zone">{{ plannedDungeon.zone }}</p>
+          <div class="readiness-row"><span>At recommended starting level</span><strong>{{ readyCount }} <span>/ {{ members.length }}</span></strong></div>
+          <div class="progress-track" role="progressbar" [attr.aria-valuenow]="readyCount" [attr.aria-valuemax]="members.length" aria-label="Party members ready"><span [style.width.%]="(readyCount / members.length) * 100"></span></div>
+          <div class="ready-footnote"><span>{{ readyCount }} ready</span><span>{{ members.length - readyCount }} catching up</span></div>
+        </section>
+
+        <section class="panel progress-panel" aria-labelledby="party-progress-title">
+          <div class="panel-heading"><h2 id="party-progress-title">Party progress</h2><span class="muted-count">{{ members.length }} players</span></div>
+          <div class="member-list">
+            @for (member of members; track member.character) {
+              <div class="member-row">
+                <span class="member-avatar" [style.background]="member.color">{{ member.character.charAt(0) }}</span>
+                <span class="member-name"><strong>{{ member.character }}</strong>@if (member.isYou) { <small>Your character</small> }</span>
+                <strong class="member-level">{{ member.level }}</strong>
+                <div class="member-progress">
+                  <span class="mini-track"><i [style.width.%]="progressPercent(member.level)"></i></span>
+                  @if (member.level >= plannedDungeon.minLevel) {
+                    <span class="member-status is-ready">Ready</span>
+                  } @else {
+                    <span class="member-status">{{ plannedDungeon.minLevel - member.level }} to go</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+          <p class="sample-note">Sample party · character data is not connected yet.</p>
+        </section>
+      </div>
+
+      <aside class="side-column">
+        <section class="panel dungeon-panel" aria-labelledby="dungeon-plan-title">
+          <div class="panel-heading"><h2 id="dungeon-plan-title">Horde dungeon route</h2><span class="muted-count">{{ dungeons.length }} dungeons</span></div>
+          <div class="dungeon-list">
+            @for (dungeon of dungeons; track dungeon.name) {
+              <button class="dungeon-row" [class.is-current]="dungeon.name === plannedDungeon.name" [class.is-complete]="dungeon.state === 'complete'" [attr.aria-current]="dungeon.name === plannedDungeon.name ? 'step' : null" (click)="planDungeon(dungeon)">
+                <span class="dungeon-copy"><strong>{{ dungeon.name }}</strong><small>{{ dungeon.zone }} · {{ dungeon.minLevel }}–{{ dungeon.maxLevel }}@if (dungeon.note) { · {{ dungeon.note }} }</small></span>
+                @if (dungeon.name === plannedDungeon.name) {
+                  <span class="dungeon-state current-state">Next</span>
+                } @else if (dungeon.state === 'complete') {
+                  <span class="dungeon-state complete-state">4/4</span>
+                } @else {
+                  <span class="dungeon-state">{{ dungeon.progress }}</span>
+                }
+              </button>
+            }
+          </div>
+          <p class="roadmap-note">Classic recommended ranges, not entry requirements; WoW Forever-specific differences are unverified. Deadmines is an off-route trip; Stockades is Alliance-only.</p>
+          <a class="source-link" href="https://www.wowhead.com/classic/guide/classic-dungeons-overview" target="_blank" rel="noreferrer">Level ranges: Wowhead Classic Dungeons Overview</a>
+        </section>
+
+        <section class="panel availability-panel" aria-labelledby="availability-title">
+          <div class="panel-heading"><h2 id="availability-title">Find a time</h2><button class="week-button" aria-label="Previous week" (click)="shiftWeek(-1)">‹</button><span class="week-label">{{ weekLabel }}</span><button class="week-button" aria-label="Next week" (click)="shiftWeek(1)">›</button></div>
+          <div class="week-grid">
+            @for (day of weekDays; track day.date) {
+              <button class="day-cell" [class.best-day]="day.isBest" (click)="showNotice(`${day.day} ${day.date}: ${day.availability} in the sample party.`)">
+                <span>{{ day.day }}</span><strong>{{ day.date }}</strong><small>{{ day.availability }}</small>
+              </button>
+            }
+          </div>
+          <div class="best-time"><span class="best-dot"></span><span><strong>Saturday</strong><small>Best overlap this week</small></span></div>
+          <div class="session-card"><span class="session-date"><strong>{{ upcomingDate | date:'dd' }}</strong><small>{{ upcomingDate | date:'MMM' }}</small></span><span class="session-info"><strong>Dungeon night</strong><small>{{ upcomingDate | date:'EEEE' }} · 8:00 PM</small></span></div>
+          <button class="availability-button" [class.is-available]="myAvailability === 'available'" (click)="toggleAvailability(myMember)">
+            {{ myAvailability === 'available' ? 'I can make it' : 'Set my availability' }}
+          </button>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  @if (notice) {
+    <div class="toast" role="status">{{ notice }}</div>
+  }
+
+  @if (sessionDialogOpen) {
+    <div class="modal-backdrop" (click)="$event.target === $event.currentTarget && (sessionDialogOpen = false)">
+      <form class="session-modal" (submit)="$event.preventDefault(); createSession(sessionDate.value, sessionTime.value)">
+        <button type="button" class="modal-close" aria-label="Close" (click)="sessionDialogOpen = false">×</button>
+        <p class="overline">MAKE A PLAN</p>
+        <h2>Dungeon night</h2>
+        <p class="modal-copy">Choose a time for {{ plannedDungeon.name }}.</p>
+        <label for="session-date">Date and time</label>
+        <div class="form-row"><input #sessionDate id="session-date" type="date" [value]="newSessionDate" required /><input #sessionTime aria-label="Session time" type="time" [value]="newSessionTime" required /></div>
+        <button type="submit" class="primary-button modal-submit">Save session idea</button>
+        <small class="sample-note">Preview only · sessions are not saved yet</small>
+      </form>
+    </div>
+  }
+</section>

@@ -1,0 +1,16 @@
+{
+  "name": "sapphirix-party-planner-api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node app.js",
+    "test": "node --test",
+    "db:migrate": "node migrate.js"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.7",
+    "express": "~4.22.3",
+    "firebase-admin": "^14.5.0",
+    "pg": "^8.23.1"
+  }
+}
